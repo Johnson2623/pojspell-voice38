@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>遊戲製作指令工坊 Pro</title>
 <style>
-:root{--bg:#f4f5f8;--card:#fff;--tx:#1b1d24;--mut:#666b78;--bd:#dfe2ea;--ac:#4a56e2;--ac2:#e9ebff;--ok:#2f8f5b;--warn:#d9531e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14151a;--card:#1e2027;--tx:#eceef5;--mut:#9aa0af;--bd:#343744;--ac:#8c96ff;--ac2:#2a2d4a;--ok:#5ac58a;--warn:#ff8a5c;color-scheme:dark}}
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a64;--bd:#e2e0d8;--ac:#d9531e;--ac2:#fbe9e1;--ok:#2f8f5b;--warn:#d9531e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#171716;--card:#222220;--tx:#efeee9;--mut:#a09f97;--bd:#383835;--ac:#ff7a45;--ac2:#3a2a22;--ok:#5ac58a;--warn:#ff8a5c;color-scheme:dark}}
 *{box-sizing:inherit}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
 header{max-width:1040px;margin:auto;padding:16px 16px 4px}
@@ -30,6 +30,17 @@ pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px d
 .miss{color:var(--warn);font-weight:600}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .cmd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.cmd b{display:block}.tag{font-size:13px;color:var(--mut)}
 textarea{min-height:120px;font-size:13px}
+.tabs{gap:8px}.tabs button{flex:1;padding:18px 10px;border-radius:14px;font-weight:600;font-size:16px;text-align:center}
+.nav button{padding:14px;border-radius:12px;font-size:16px;font-weight:600}
+@media(min-width:761px){.layout{grid-template-columns:260px 1fr;gap:16px}}
+.bar{height:10px;margin:8px 0 16px}
+.card{border-radius:16px;padding:20px 22px}.card h2{font-size:20px}
+label{font-size:14px;margin:16px 0 6px}
+input,textarea,select{padding:15px 16px;border-radius:12px;font-size:16px}
+textarea{font-size:14px}
+.gbox{margin-top:8px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);padding:10px 12px 6px}
+.chip{display:inline-block;margin:0 6px 6px 0;padding:6px 13px;border:1px solid var(--bd);border-radius:99px;background:var(--card);color:var(--tx);font:14px inherit;cursor:pointer}
+.chip:hover,.chip.on{border-color:var(--ac);background:var(--ac2)}
 </style>
 </head>
 <body>
@@ -71,7 +82,7 @@ function build(i){const m=M[i],v=st.m[i]||{};
  return "## 專案脈絡\n"+ctx()+"\n\n## 任務\n"+task+(c?"\n\n## 限制條件\n"+c:"")+"\n\n## 輸出要求\n- "+MODES[st.mode]+"\n- 詳細程度:"+DET[st.det]+"\n- 使用繁體中文回覆"}
 function task(i){return build(i).split("## 限制條件")[0].split("## 任務\n")[1].trim()}
 function fld(f,val,attr){const[k,l,t,o]=f;let h='<label>'+esc(l)+'</label>';
- if(t==="s")h+='<select '+attr+'="'+k+'"><option value="">(請選擇)</option>'+o.map(x=>'<option'+(val===x?' selected':'')+'>'+esc(x)+'</option>').join("")+'</select>';
+ if(t==="s")h+='<input '+attr+'="'+k+'" placeholder="請輸入,或點選下方選項" value="'+esc(val||"")+'"><div class="gbox">'+o.map(x=>'<button type="button" class="chip'+(val===x?' on':'')+'" data-opt="'+attr+'|'+k+'" data-t="'+esc(x)+'">'+esc(x)+'</button>').join("")+'</div>';
  else h+='<input '+attr+'="'+k+'" placeholder="'+esc(o)+'" value="'+esc(val||"")+'">';return h}
 async function cp(t,b){try{await navigator.clipboard.writeText(t)}catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();try{document.execCommand("copy")}catch(_){}x.remove()}const o=b.textContent;b.textContent="已複製 ✓";setTimeout(()=>b.textContent=o,1400)}
 function render(){
@@ -101,7 +112,7 @@ app.addEventListener("input",e=>{const t=e.target,d=t.dataset;
  else if(d.c!==undefined){const i=+d.c,x=st.cons.indexOf(i);x<0?st.cons.push(i):st.cons.splice(x,1)}
  else if(d.mode!==undefined){st.mode=+t.value}else if(d.det!==undefined){st.det=+t.value}else return;
  save();refresh()});
-document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,v=b.dataset.v;
+document.addEventListener("click",e=>{const c=e.target.closest(".chip");if(c&&c.dataset.opt){const p=c.dataset.opt.split("|"),inp=document.querySelector('['+p[0]+'="'+p[1]+'"]');if(inp){inp.value=c.dataset.t;inp.dispatchEvent(new Event("input",{bubbles:true}));c.parentNode.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c))}return}const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,v=b.dataset.v;
  if(a==="tab"){st.tab=v;save();render();scrollTo(0,0)}
  else if(a==="mod"){st.cur=+v;save();render()}
  else if(a==="cp")cp(build(st.cur),b);else if(a==="cptask")cp(task(st.cur),b);else if(a==="cpctx")cp(ctx(),b);
