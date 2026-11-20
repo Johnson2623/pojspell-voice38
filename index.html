@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>遊戲製作指令工坊 Pro</title>
+<style>
+:root{--bg:#f4f5f8;--card:#fff;--tx:#1b1d24;--mut:#666b78;--bd:#dfe2ea;--ac:#4a56e2;--ac2:#e9ebff;--ok:#2f8f5b;--warn:#d9531e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14151a;--card:#1e2027;--tx:#eceef5;--mut:#9aa0af;--bd:#343744;--ac:#8c96ff;--ac2:#2a2d4a;--ok:#5ac58a;--warn:#ff8a5c;color-scheme:dark}}
+*{box-sizing:inherit}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+header{max-width:1040px;margin:auto;padding:16px 16px 4px}
+h1{margin:0;font-size:22px}h1 small{font-size:12px;background:var(--ac);color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle;margin-left:6px}
+header p{margin:4px 0 0;color:var(--mut);font-size:14px}
+.tabs{display:flex;gap:6px;max-width:1040px;margin:8px auto;padding:0 16px;overflow-x:auto}
+.tabs button,.btn,.nav button{padding:9px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button.on,.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+main{max-width:1040px;margin:auto;padding:8px 16px 40px}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden;margin:6px 0 14px}.bar i{display:block;height:100%;background:var(--ok)}
+.layout{display:grid;grid-template-columns:220px 1fr;gap:14px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.nav{flex-direction:row!important;overflow-x:auto}}
+.nav{display:flex;flex-direction:column;gap:6px}.nav button{text-align:left}.nav button.on{border-color:var(--ac);background:var(--ac2)}.nav button.done::after{content:" ✓";color:var(--ok);font-weight:700}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:18px}.d{color:var(--mut);margin:0 0 10px;font-size:14px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 3px}
+input,textarea,select{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:600px){.g2{grid-template-columns:1fr}}
+.ck{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.ck label{display:flex;align-items:center;gap:6px;margin:0;font-weight:400;font-size:13.5px;border:1px solid var(--bd);border-radius:99px;padding:5px 11px;cursor:pointer}.ck input{width:auto}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px dashed var(--bd);border-radius:10px;padding:12px;margin:8px 0;font:13.5px/1.6 inherit;max-height:420px;overflow:auto}
+.miss{color:var(--warn);font-weight:600}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cmd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.cmd b{display:block}.tag{font-size:13px;color:var(--mut)}
+textarea{min-height:120px;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>🎮 遊戲製作指令工坊<small>Pro</small></h1><p>給中高階開發者:專案脈絡 + 14 個進階模組 + 限制條件 + 輸出模式,組合出精準、可直接貼給 Claude 的指令。</p></header>
+<div class="tabs"><button data-act="tab" data-v="set">① 專案設定</button><button data-act="tab" data-v="mod">② 進階模組</button><button data-act="tab" data-v="lib">③ 進階指令庫</button><button data-act="tab" data-v="exp">④ 匯出 / 匯入</button></div>
+<main><div id="app"></div></main>
+<script>
+const GF=[["name","遊戲名稱","t","例:星空收集者"],["genre","遊戲類型","t","例:2D 平台跳躍"],["core","核心玩法(一句話)","t","例:躲避隕石並收集星星"],["platform","平台(可更改)","t","例:網頁瀏覽器(PC + 手機)"],["tech","技術棧(可更改)","s",["單一 HTML + JavaScript","HTML5 Canvas + ES Modules","Phaser 3","Three.js(3D)","React + Canvas","Pygame (Python)","Godot (GDScript)","Unity (C#)"]],["code","程式風格","s",["單檔、易讀優先","模組化(ES Modules)","TypeScript","物件導向","資料導向 / ECS"]],["scope","專案規模","s",["Game Jam(48 小時)","個人專案(1–3 個月)","小團隊(2–5 人)","商業上線"]],["audience","目標玩家","t","例:10–15 歲休閒玩家"],["style","美術風格","t","例:像素風"]];
+const CONS=["效能優先(60 FPS)","手機與觸控相容","模組化、易擴充","加上中文註解","附單元測試","無障礙友善","避免外部相依套件","數值集中可調","防止作弊/資料竄改"];
+const MODES=["輸出完整可執行程式碼","只提供修改差異(diff)並說明位置","先給架構與步驟,待我確認後再寫程式","以程式碼審查報告形式回覆","以逐步教學形式回覆"];
+const DET=["精簡","標準","詳盡(含取捨分析)"];
+const M=[
+{t:"1 架構設計",d:"先定骨架,再填內容。",f:[["modules","主要模組","t","例:輸入、渲染、物理、音效、UI、存檔"],["pattern","架構模式","s",["元件式(Component)","ECS 實體元件系統","MVC","事件驅動(Event Bus)","狀態機為核心"]]],p:"請為此遊戲設計程式架構。主要模組:{modules};架構模式:{pattern}。請提供:資料夾/檔案結構、各模組職責與介面、模組間的溝通方式,以及可能的技術風險與取捨。"},
+{t:"2 迴圈與狀態機",d:"遊戲的心跳與流程控制。",f:[["states","遊戲狀態","t","例:載入、主選單、遊戲中、暫停、結算"],["loop","迴圈方式","s",["固定時間步長(Fixed Timestep)","可變時間步(delta time)","回合制事件迴圈"]]],p:"請實作遊戲主迴圈與狀態機。狀態:{states};迴圈方式:{loop}。需處理:狀態切換規則、暫停時的計時、分頁切到背景時的處理,以及避免不同裝置速度不一致。"},
+{t:"3 物理與碰撞",d:"穿牆、卡牆的根源都在這。",f:[["coll","碰撞方式","s",["AABB 矩形","圓形","SAT 多邊形","Tile 網格碰撞","射線偵測"]],["phys","物理參數","t","例:重力 980、摩擦 0.8、彈跳 0.3"]],p:"請實作物理與碰撞系統。碰撞方式:{coll};物理參數:{phys}。需包含:碰撞偵測與回應、避免穿牆(高速物體處理)、碰撞分層(玩家/敵人/道具),並說明效能考量。"},
+{t:"4 敵人 AI",d:"讓敵人有行為,而不只是移動。",f:[["ai","AI 方式","s",["巡邏路徑","追逐與逃跑","有限狀態機(FSM)","行為樹","A* 尋路","群體行為"]],["aidesc","敵人描述","t","例:會巡邏,發現玩家後追逐 3 秒"]],p:"請設計並實作敵人 AI。AI 方式:{ai};敵人描述:{aidesc}。請提供:狀態/行為圖、可調整參數(視野、速度、反應時間)、避免作弊感的設計,以及如何視覺化除錯 AI 狀態。"},
+{t:"5 關卡資料",d:"資料驅動,方便擴充與調整。",f:[["fmt","資料格式","s",["JSON 資料驅動","Tile 地圖格式","程序化生成","手工腳本"]],["rules","關卡規則","t","例:每關 3 種敵人、1 個出口、隨機道具"]],p:"請設計關卡資料系統。資料格式:{fmt};關卡規則:{rules}。請提供:資料結構範例、載入與驗證方式、新增一個關卡所需的最少步驟,以及簡單的關卡編輯/預覽做法。"},
+{t:"6 數值平衡",d:"把感覺變成公式。",f:[["curve","成長曲線","s",["線性","指數","S 型","階梯式"]],["formulas","公式或規則","t","例:傷害 = 攻擊 × (1 - 防禦/(防禦+100))"]],p:"請設計數值平衡方案。成長曲線:{curve};公式/規則:{formulas}。請提供:數值表(前 10 級或 10 關)、可能被玩家破壞平衡的漏洞、以及快速模擬或自動測試平衡的方法。"},
+{t:"7 存檔系統",d:"讓進度可以保留。",f:[["store","儲存方式","s",["localStorage","IndexedDB","雲端帳號","匯出/匯入 JSON 檔"]],["data","需要儲存的資料","t","例:最高分、已解鎖關卡、設定"]],p:"請實作存檔系統。儲存方式:{store};儲存資料:{data}。請處理:資料版本遷移、損毀存檔的容錯、容量限制,以及重置存檔功能。"},
+{t:"8 介面與無障礙",d:"好用、人人都能玩。",f:[["ui","需要的畫面","t","例:主選單、HUD、暫停、結算、設定"],["a11y","無障礙重點","s",["色盲友善","鍵盤全操作","可調字體大小","減少動態效果","螢幕閱讀器支援"]]],p:"請設計並實作遊戲介面。畫面:{ui};無障礙重點:{a11y}。請提供:各畫面版面與導覽流程、手機與桌機的自適應方式,以及具體的無障礙實作做法。"},
+{t:"9 音效與手感",d:"小細節決定打擊感。",f:[["juice","手感效果","t","例:螢幕震動、粒子、命中停頓、縮放回彈"],["audio","音效方案","s",["Web Audio 即時合成","音檔 + Howler.js","暫不需要音效"]]],p:"請為遊戲加入打擊感與音效。手感效果:{juice};音效方案:{audio}。請提供:各事件(得分、受傷、勝利)對應的效果表、參數可調整的實作,以及避免音效過吵的混音原則。"},
+{t:"10 效能優化",d:"先量測,再優化。",f:[["target","目標","t","例:中階手機 60 FPS"],["opt","優化手法","s",["物件池(Object Pool)","離屏 Canvas","批次繪製","空間分割(四元樹)","減少垃圾回收(GC)"]]],p:"請分析並優化遊戲效能。目標:{target};優先嘗試:{opt}。請先說明如何量測瓶頸(FPS、記憶體、繪製次數),再列出由影響最大到最小的優化清單,並提供對應程式碼與預期成效。"},
+{t:"11 測試品質",d:"建立信心,再發佈。",f:[["test","測試方式","s",["單元測試","自動化回歸","玩家測試腳本","壓力測試"]],["cases","重點測試情境","t","例:碰撞邊界、存檔損毀、連點按鈕"]],p:"請為遊戲建立測試方案。測試方式:{test};重點情境:{cases}。請提供:測試清單、可直接執行的測試程式碼範例、需要的測試工具,以及如何在每次修改後自動檢查。"},
+{t:"12 部署上線",d:"把作品交到玩家手上。",f:[["host","發佈平台","s",["itch.io","GitHub Pages","Netlify","自有網站","PWA(可安裝到手機)"]],["extra","額外需求","t","例:自訂網址、離線可玩"]],p:"請協助我部署遊戲。發佈平台:{host};額外需求:{extra}。請提供:發佈前檢查清單(相容性、載入速度、授權)、一步步部署教學、版本更新流程,以及常見失敗原因。"},
+{t:"13 數據與回饋",d:"用資料改進遊戲。",f:[["events","要追蹤的事件","t","例:關卡開始、失敗、通關、使用道具"],["priv","隱私策略","s",["不蒐集個資","匿名統計","需同意橫幅"]]],p:"請設計遊戲數據追蹤與玩家回饋機制。事件:{events};隱私策略:{priv}。請提供:事件命名與欄位規格、簡單的本地或第三方統計做法、玩家回饋表單題目,以及如何從數據判斷關卡是否太難。"},
+{t:"14 多人與網路",d:"進階:連線與同步。",f:[["net","網路方式","s",["本機雙人","WebSocket 即時對戰","回合制非同步","排行榜 API"]],["sync","同步重點","t","例:位置同步、延遲補償、作弊防護"]],p:"請設計遊戲的多人/網路功能。方式:{net};同步重點:{sync}。請提供:架構圖(文字描述)、訊息格式、延遲與斷線處理、基本防作弊策略,以及先做單機可驗證的最小版本。"}];
+const LIB=[["程式碼審查","請以資深工程師角度審查以下程式碼,依「錯誤、效能、可讀性、安全性」分類列出問題,按嚴重度排序,並提供修正範例:\n【貼上程式碼】"],["重構為模組","請把以下程式碼重構為清楚的模組結構,不改變玩法,並列出每個模組的職責與改動前後對照:\n【貼上程式碼】"],["補上單元測試","請為以下函式/模組撰寫單元測試,涵蓋正常、邊界與錯誤情況,並說明如何執行:\n【貼上程式碼】"],["效能分析","以下遊戲在【情況】時掉幀。請教我如何用瀏覽器開發者工具量測,再根據結果給出優化順序:\n【貼上程式碼】"],["防作弊檢查","請檢查此遊戲的分數、存檔與計時邏輯有哪些容易被竄改的地方,並提供合理且不過度複雜的防護方案。"],["加上型別(TypeScript)","請把以下 JavaScript 轉成 TypeScript,定義清楚的型別與介面,並說明 tsconfig 建議:\n【貼上程式碼】"],["技術債清單","請閱讀以下專案程式碼,列出技術債清單,每項標示影響、修復成本與建議處理順序:\n【貼上程式碼】"],["設計模式建議","我的遊戲遇到【問題】。請建議適合的設計模式(例如狀態、觀察者、物件池、命令),比較取捨並給出最小可行範例。"],["解讀錯誤訊息","我遇到以下錯誤。請解釋原因、列出最可能的 3 個修復方向,並教我如何確認:\n【貼上錯誤訊息與相關程式碼】"],["移植到其他引擎","請評估把此遊戲從【現有技術】移植到【目標技術】的工作量,列出需要重寫、可重用與風險項目,並給出分階段計畫。"],["PWA 離線化","請讓此網頁遊戲成為 PWA:加入 manifest、Service Worker 快取策略與更新機制,並說明如何測試離線可玩。"],["專案說明文件","請根據目前的程式與設計討論,產出 README:簡介、操作方式、專案結構、如何執行與建置、可調整參數、已知問題。"]];
+const DEF={g:{platform:"網頁瀏覽器(PC + 手機)",tech:"單一 HTML + JavaScript"},m:{},done:[],cur:0,tab:"set",mode:0,det:1,cons:[1,2,3,6,7]};
+let st=JSON.parse(JSON.stringify(DEF));
+try{const s=localStorage.getItem("gps_pro");if(s)st=Object.assign(st,JSON.parse(s))}catch(e){}
+const save=()=>{try{localStorage.setItem("gps_pro",JSON.stringify({g:st.g,m:st.m,done:st.done,cur:st.cur,tab:st.tab,mode:st.mode,det:st.det,cons:st.cons}))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const hl=t=>esc(t).replace(/【請填:[^】]+】/g,x=>'<span class="miss">'+x+'</span>');
+const lab=l=>l.replace(/\(可更改\)/,"");
+function ctx(){return GF.filter(f=>(st.g[f[0]]||"").trim()).map(f=>"- "+lab(f[1])+":"+st.g[f[0]].trim()).join("\n")||"- (尚未填寫專案設定)"}
+function build(i){const m=M[i],v=st.m[i]||{};
+ const task=m.p.replace(/\{(\w+)\}/g,(_,k)=>(v[k]||"").trim()||"【請填:"+m.f.find(x=>x[0]===k)[1]+"】");
+ const c=st.cons.map(j=>"- "+CONS[j]).join("\n");
+ return "## 專案脈絡\n"+ctx()+"\n\n## 任務\n"+task+(c?"\n\n## 限制條件\n"+c:"")+"\n\n## 輸出要求\n- "+MODES[st.mode]+"\n- 詳細程度:"+DET[st.det]+"\n- 使用繁體中文回覆"}
+function task(i){return build(i).split("## 限制條件")[0].split("## 任務\n")[1].trim()}
+function fld(f,val,attr){const[k,l,t,o]=f;let h='<label>'+esc(l)+'</label>';
+ if(t==="s")h+='<select '+attr+'="'+k+'"><option value="">(請選擇)</option>'+o.map(x=>'<option'+(val===x?' selected':'')+'>'+esc(x)+'</option>').join("")+'</select>';
+ else h+='<input '+attr+'="'+k+'" placeholder="'+esc(o)+'" value="'+esc(val||"")+'">';return h}
+async function cp(t,b){try{await navigator.clipboard.writeText(t)}catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();try{document.execCommand("copy")}catch(_){}x.remove()}const o=b.textContent;b.textContent="已複製 ✓";setTimeout(()=>b.textContent=o,1400)}
+function render(){
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===st.tab));
+ const a=document.getElementById("app"),pct=Math.round(st.done.length/M.length*100);
+ if(st.tab==="set"){
+  a.innerHTML='<div class="card"><h2>專案脈絡</h2><p class="d">填一次,所有模組的指令都會自動帶入。</p><div class="g2">'+GF.map(f=>'<div>'+fld(f,st.g[f[0]],"data-g")+'</div>').join("")+'</div></div>'+
+  '<div class="card"><h2>限制條件</h2><p class="d">勾選後會附加在每個指令中。</p><div class="ck">'+CONS.map((c,i)=>'<label><input type="checkbox" data-c="'+i+'"'+(st.cons.includes(i)?' checked':'')+'>'+esc(c)+'</label>').join("")+'</div>'+
+  '<div class="g2"><div><label>輸出模式</label><select data-mode>'+MODES.map((m,i)=>'<option value="'+i+'"'+(i===st.mode?' selected':'')+'>'+esc(m)+'</option>').join("")+'</select></div><div><label>詳細程度</label><select data-det>'+DET.map((m,i)=>'<option value="'+i+'"'+(i===st.det?' selected':'')+'>'+esc(m)+'</option>').join("")+'</select></div></div></div>'+
+  '<div class="card"><h2>專案脈絡預覽</h2><pre id="ctx">'+esc(ctx())+'</pre><div class="row"><button class="btn p" data-act="cpctx">複製專案脈絡</button><button class="btn" data-act="tab" data-v="mod">開始進階模組 →</button></div></div>';
+ }else if(st.tab==="mod"){
+  const m=M[st.cur],v=st.m[st.cur]||{};
+  a.innerHTML='<div class="bar"><i style="width:'+pct+'%"></i></div><div class="layout"><div class="nav">'+M.map((x,i)=>'<button data-act="mod" data-v="'+i+'" class="'+(i===st.cur?'on ':'')+(st.done.includes(i)?'done':'')+'">'+x.t+'</button>').join("")+'</div><div>'+
+  '<div class="card"><h2>'+m.t+'</h2><p class="d">'+m.d+'</p>'+m.f.map(f=>fld(f,v[f[0]],"data-m")).join("")+'</div>'+
+  '<div class="card"><h2>產生的指令</h2><p class="d">紅字為尚未填寫的欄位;專案脈絡與限制條件在「① 專案設定」調整。</p><pre id="out">'+hl(build(st.cur))+'</pre><div class="row"><button class="btn p" data-act="cp">複製完整指令</button><button class="btn" data-act="cptask">只複製任務</button><button class="btn" data-act="done">'+(st.done.includes(st.cur)?'取消完成':'標記完成 ✓')+'</button>'+(st.cur<M.length-1?'<button class="btn" data-act="next">下一個 →</button>':'')+'</div></div></div></div>';
+ }else if(st.tab==="lib"){
+  a.innerHTML='<div class="card"><h2>進階指令庫</h2><p class="d">【】內請自行替換。</p>'+LIB.map((c,i)=>'<div class="card cmd"><div><b>'+c[0]+'</b><span class="tag">'+esc(c[1]).replace(/\n/g,"<br>")+'</span></div><button class="btn" data-act="lib" data-v="'+i+'">複製</button></div>').join("")+'</div>';
+ }else{
+  const j=JSON.stringify({g:st.g,m:st.m,done:st.done,mode:st.mode,det:st.det,cons:st.cons});
+  a.innerHTML='<div class="card"><h2>匯出專案</h2><p class="d">複製下方 JSON 存成筆記,之後可貼回「匯入」還原。</p><textarea readonly>'+esc(j)+'</textarea><div class="row"><button class="btn p" data-act="cpj">複製 JSON</button><button class="btn" data-act="cpall">複製全部 14 個指令</button></div></div>'+
+  '<div class="card"><h2>匯入專案</h2><textarea id="imp" placeholder="貼上先前匯出的 JSON"></textarea><div class="row"><button class="btn p" data-act="imp">匯入</button><button class="btn" data-act="reset">清除重來</button></div></div>';
+ }}
+const app=document.getElementById("app");
+function refresh(){const o=document.getElementById("out");if(o)o.innerHTML=hl(build(st.cur));const c=document.getElementById("ctx");if(c)c.textContent=ctx()}
+app.addEventListener("input",e=>{const t=e.target,d=t.dataset;
+ if(d.g!==undefined){st.g[d.g]=t.value}else if(d.m!==undefined){(st.m[st.cur]=st.m[st.cur]||{})[d.m]=t.value}
+ else if(d.c!==undefined){const i=+d.c,x=st.cons.indexOf(i);x<0?st.cons.push(i):st.cons.splice(x,1)}
+ else if(d.mode!==undefined){st.mode=+t.value}else if(d.det!==undefined){st.det=+t.value}else return;
+ save();refresh()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,v=b.dataset.v;
+ if(a==="tab"){st.tab=v;save();render();scrollTo(0,0)}
+ else if(a==="mod"){st.cur=+v;save();render()}
+ else if(a==="cp")cp(build(st.cur),b);else if(a==="cptask")cp(task(st.cur),b);else if(a==="cpctx")cp(ctx(),b);
+ else if(a==="done"){const i=st.done.indexOf(st.cur);i<0?st.done.push(st.cur):st.done.splice(i,1);save();render()}
+ else if(a==="next"){if(!st.done.includes(st.cur))st.done.push(st.cur);st.cur++;save();render();scrollTo(0,0)}
+ else if(a==="lib")cp(LIB[+v][1],b);
+ else if(a==="cpj")cp(JSON.stringify({g:st.g,m:st.m,done:st.done,mode:st.mode,det:st.det,cons:st.cons}),b);
+ else if(a==="cpall")cp(M.map((m,i)=>"# "+m.t+"\n"+build(i)).join("\n\n---\n\n"),b);
+ else if(a==="imp"){try{const o=JSON.parse(document.getElementById("imp").value);st.g=o.g||{};st.m=o.m||{};st.done=o.done||[];st.mode=o.mode||0;st.det=o.det===undefined?1:o.det;st.cons=o.cons||[];save();st.tab="set";render()}catch(_){b.textContent="格式錯誤,請重新貼上";setTimeout(()=>b.textContent="匯入",1800)}}
+ else if(a==="reset"){if(confirm("確定清除所有內容?")){st=JSON.parse(JSON.stringify(DEF));save();render()}}});
+render();
+</script>
+</body>
+</html>
